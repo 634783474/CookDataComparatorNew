@@ -100,7 +100,7 @@ namespace CookDataComparator
 
         private void buttonSrcData_Click(object sender, EventArgs e)
         {
-			string pattern = @"0x[0-9 a-f A-F]{1,2}|[0-9]{1,3},";
+			string pattern = @"0x[0-9 a-f A-F]{1,2}|[0-9]{1,3}";
 			
 			var fileContent = string.Empty;
             var filePath = string.Empty;
