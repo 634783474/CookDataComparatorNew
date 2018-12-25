@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Collections;
 
 namespace CookDataComparator
 {
@@ -19,6 +20,7 @@ namespace CookDataComparator
         {
             InitializeComponent();
         }
+        ArrayList portList = new ArrayList();
 
         private void buttonCompare_Click(object sender, EventArgs e)
         {
@@ -165,5 +167,97 @@ namespace CookDataComparator
 			}
 
 		}
+
+        private void FormMain_Shown(object sender, EventArgs e)
+        {
+            portList.AddRange(System.IO.Ports.SerialPort.GetPortNames());
+            portList.Sort();
+            serialportNameComboBox.Items.AddRange(portList.ToArray());
+            serialportNameComboBox.SelectedIndex = 0;
+            baudComboBox.SelectedIndex = 1;
+            databitsComboBox.SelectedIndex = 0;
+            stopbitsComboBox.SelectedIndex = 0;
+            parityComboBox.SelectedIndex = 0;
+        }
+
+        private void serialportOpenButton_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Close();
+                serialportOpenButton.Text = "打开串口";
+                onOffRadioButton.Checked = false;
+                return;
+            }
+            serialPort1.PortName = serialportNameComboBox.Text;
+            serialPort1.BaudRate = Convert.ToInt32(baudComboBox.Text);
+            serialPort1.DataBits = Convert.ToInt32(databitsComboBox.Text);
+            if (stopbitsComboBox.Text == "1")
+            {
+                serialPort1.StopBits = System.IO.Ports.StopBits.One;
+            }
+            else
+            {
+                serialPort1.StopBits = System.IO.Ports.StopBits.None;
+            }
+
+            if (parityComboBox.Text == "偶校验")
+            {
+                serialPort1.Parity = System.IO.Ports.Parity.Even;
+            }
+            else if (parityComboBox.Text == "奇校验")
+            {
+                serialPort1.Parity = System.IO.Ports.Parity.Odd;
+            }
+            else
+            {
+                serialPort1.Parity = System.IO.Ports.Parity.None;
+            }
+
+            try
+            {
+                serialPort1.Open();
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+
+            serialportOpenButton.Text = "关闭串口";
+            onOffRadioButton.Checked = true;
+        }
+
+        string gblStr;
+        bool isMatchCdk = false;
+        private void serialPort1_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
+        {
+            string serialPortRecData=serialPort1.ReadExisting();
+            gblStr+= serialPortRecData;
+            Match match = Regex.Match(gblStr, "CKD:");
+            if((match.Success)&&(isMatchCdk==false))
+            {
+                isMatchCdk = true;
+                //MessageBox.Show("发现烹饪数据标记");
+
+                MatchCollection matches = Regex.Matches(gblStr, "[0-9 a-f]{266}");
+                Debug.Write(matches.Count + "\n");
+                string valueTemp = null ;
+                foreach (Match match1 in matches)
+                {
+                    valueTemp += match1.Groups[0].Value;
+                }
+                gblStr = null;
+                isMatchCdk = false;
+
+                this.Invoke(new EventHandler(delegate
+                {
+                    textBoxTemp.Clear();
+                    textBoxTemp.Text += valueTemp;
+                    
+                }));
+            }
+           
+        }
     }
 }
