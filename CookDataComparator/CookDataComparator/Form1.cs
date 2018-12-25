@@ -100,8 +100,9 @@ namespace CookDataComparator
 
         private void buttonSrcData_Click(object sender, EventArgs e)
         {
+            string srcStr=null;
+            
 			string pattern = @"0x[0-9 a-f A-F]{1,2}|[0-9]{1,3}";
-			
 			var fileContent = string.Empty;
             var filePath = string.Empty;
             openFileDialogSrcData.Filter = "js files (*.js)|*.js|All files (*.*)|*.*";
@@ -119,28 +120,48 @@ namespace CookDataComparator
                 
                 fileContent = reader.ReadToEnd();
 
-                MessageBox.Show(fileContent, "File Content at path: " + filePath, MessageBoxButtons.OK);
+                fileContent = fileContent.Replace("\n", "").Replace("\r", "").Replace(" ", "").Replace("\t","");
+
+                //MessageBox.Show(fileContent, "File Content at path: " + filePath, MessageBoxButtons.OK);
 
 				MatchCollection matches = Regex.Matches(fileContent, pattern);
 
-				Debug.Write(matches.Count+"\n");
+				//Debug.Write(matches.Count+"\n");
+                if(matches.Count!=133)
+                {
+                     MessageBox.Show("指定的文件格式不对。");
+                }
+                else
+                {
+                    foreach (Match match in matches)
+				    {
+					    //Debug.Write(match.Groups[0].Value);
+                        //Debug.Write("\n");
+                        //string beforeFormat=Convert.ToString(Convert.ToUInt16(match.Groups[0].Value,16),16)
 
-				foreach (Match match in matches)
-				{
-					Debug.Write(match.Groups[0].Value);
-				}
+                        string valueTemp = match.Groups[0].Value;
 
-				/*
-				if(m.Success)
-				{
-					Debug.Write();
-					MessageBox.Show(m.Groups.Count.ToString());
-				}
-				else
-				{
-					MessageBox.Show("match failed.");
-				}
-				*/
+                        Match match1 = Regex.Match(valueTemp, "0[x|X]");
+                        Int16 a;
+                        if(match1.Success)
+                        {
+                            a = Convert.ToInt16(match.Groups[0].Value, 16);
+                        }
+                        else
+                        {
+                            a = Convert.ToInt16(match.Groups[0].Value, 10);
+                        }
+                         
+                        string strTemp = String.Format("{0:x2}", a);
+
+                        srcStr+=strTemp;
+				    }
+
+                    textBoxSrc.Text = srcStr;
+                }
+				
+                //MessageBox.Show(srcStr);
+			
 			}
 
 		}
